@@ -8,6 +8,7 @@ dependencies = [
     "bambi>=0.17.2",
     "lightgbm>=4.6.0",
     "matplotlib>=3.10.9",
+    "networkx>=3.6.1",
     "pandas>=3.0.2",
     "polars>=1.40.1",
     "pyarrow>=24.0.0",
