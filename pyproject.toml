@@ -7,6 +7,8 @@ requires-python = ">=3.12"
 dependencies = [
     "arviz>=0.23.4",
     "bambi>=0.17.2",
+    "ipykernel>=7.2.0",
+    "jax>=0.10.0",
     "lightgbm>=4.6.0",
     "matplotlib>=3.10.9",
     "networkx>=3.6.1",
