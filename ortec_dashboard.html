@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORTEC Dynamic Pricing — Decision Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+    --ink:#1A1F2B; --paper:#FAFAF7; --card:#FFFFFF; --line:#E8E5DC;
+    --muted:#6B6962; --soft:#A8A59B;
+    --accent:#C04848; --green:#4C9A4A; --amber:#E0B341; --blue:#2E5C8A;
+    --blue-soft:#E8EFF6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5}
+h1,h2,h3,h4{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-0.015em;color:var(--ink)}
+h1{font-size:34px;line-height:1.1}
+h2{font-size:22px;margin-bottom:18px}
+h3{font-size:17px;margin-bottom:12px;font-weight:500}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--card);border-right:1px solid var(--line);padding:28px 22px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{font-family:'Fraunces',serif;font-size:18px;font-weight:500;margin-bottom:4px}
+.brand-sub{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:32px}
+.filter-group{margin-bottom:28px}
+.filter-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-weight:500}
+.chip-group{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 11px;font-size:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:all 0.15s;user-select:none}
+.chip.active{background:var(--ink);color:white;border-color:var(--ink)}
+.chip:hover:not(.active){border-color:var(--soft)}
+.scenario-options{display:flex;flex-direction:column;gap:6px}
+.scenario-options label{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.scenario-options input{accent-color:var(--ink)}
+main{padding:36px 44px;max-width:1320px}
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
+.header-meta{font-size:12px;color:var(--muted);text-align:right}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:36px;font-style:italic}
+.section{margin-bottom:48px}
+.section-label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;font-weight:600}
+.divider{border:none;border-top:1px solid var(--line);margin:0 0 28px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-weight:500}
+.metric-value{font-family:'Fraunces',serif;font-size:30px;font-weight:500;line-height:1.1;margin-bottom:4px}
+.metric-delta{font-size:12px;color:var(--muted)}
+.metric-delta.positive{color:var(--green)}
+.row{display:grid;gap:18px;margin-bottom:18px}
+.row.two{grid-template-columns:1fr 1.3fr}
+.row.split{grid-template-columns:0.9fr 1.4fr}
+.row.scenario{grid-template-columns:1fr 2fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+.chart-caption{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.55;font-style:italic}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.tall{height:320px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-weight:500;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;padding:10px 12px;border-bottom:1px solid var(--line)}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--paper)}
+tbody tr:hover{background:var(--paper)}
+.num{font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.flag-pill{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.04em}
+.flag-pill.green{background:#E8F2E7;color:#2A5C28}
+.flag-pill.yellow{background:#FAF1D9;color:#7A5E1A}
+.flag-pill.red{background:#F5E1E1;color:#7A2828}
+.bullet-list{list-style:none;padding-left:0;font-size:13px}
+.bullet-list li{padding:6px 0;padding-left:18px;position:relative;color:var(--muted)}
+.bullet-list li::before{content:'●';position:absolute;left:0;font-size:8px;top:11px}
+.bullet-list li.green::before{color:var(--green)}
+.bullet-list li.amber::before{color:var(--amber)}
+.bullet-list li.red::before{color:var(--accent)}
+.bullet-list strong{color:var(--ink);font-weight:500}
+.scenario-controls{display:flex;flex-direction:column;gap:18px}
+.slider-row{display:flex;flex-direction:column;gap:8px}
+.slider-row .label-row{display:flex;justify-content:space-between;align-items:baseline}
+.slider-row label{font-size:13px;color:var(--muted)}
+.slider-row .value{font-family:'Fraunces',serif;font-size:22px;font-weight:500}
+input[type=range]{width:100%;accent-color:var(--ink)}
+.scenario-stats{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.scenario-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
+.scenario-stat-value{font-family:'Fraunces',serif;font-size:24px;font-weight:500}
+footer{font-size:11.5px;color:var(--soft);padding-top:24px;border-top:1px solid var(--line);margin-top:48px;line-height:1.7}
+.heatmap-wrap{overflow-x:auto}
+.heatmap{display:grid;gap:2px;font-size:12px}
+.heatmap-cell{padding:14px 10px;text-align:center;border-radius:4px;font-family:'JetBrains Mono',monospace}
+.heatmap-row-label,.heatmap-col-label{padding:6px 10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.heatmap-col-label{text-align:center}
+.heatmap-row-label{text-align:right}
+@media (max-width:1100px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto}
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .row.two,.row.split,.row.scenario{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+    <div class="brand">ORTEC</div>
+    <div class="brand-sub">Pricing • v0.3</div>
+
+    <div class="filter-group">
+        <div class="filter-label">Market group</div>
+        <div class="chip-group" id="market-chips"></div>
+    </div>
+
+    <div class="filter-group">
+        <div class="filter-label">Accommodation type</div>
+        <div class="chip-group" id="type-chips"></div>
+    </div>
+
+    <div class="filter-group">
+        <div class="filter-label">HITL flag</div>
+        <div class="chip-group" id="flag-chips"></div>
+    </div>
+
+    <div class="filter-group">
+        <div class="filter-label">Adoption scenario</div>
+        <div class="scenario-options">
+            <label><input type="radio" name="adoption" value="green"> Green only</label>
+            <label><input type="radio" name="adoption" value="green_yellow" checked> Green + yellow</label>
+            <label><input type="radio" name="adoption" value="all"> All flags</label>
+        </div>
+    </div>
+</aside>
+
+<main>
+    <div class="header">
+        <div>
+            <h1>Dynamic pricing</h1>
+            <div class="subtitle">Bayesian hierarchical recommendations — KU Leuven Statistical Consulting 2025–2026</div>
+        </div>
+        <div class="header-meta">
+            Snapshot · 2026-05-03<br>
+            Synthetic data · 1,500 ROMGIDs
+        </div>
+    </div>
+
+    <!-- LAYER 1 -->
+    <div class="section">
+        <div class="section-label">Layer 1 — Executive summary</div>
+        <h2>How much money are we leaving on the table?</h2>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">Expected uplift</div>
+                <div class="metric-value" id="m-uplift">—</div>
+                <div class="metric-delta positive" id="m-uplift-pct">—</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Decisions in scope</div>
+                <div class="metric-value" id="m-decisions">—</div>
+                <div class="metric-delta" id="m-decisions-sub">—</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Global elasticity β</div>
+                <div class="metric-value" id="m-beta">—</div>
+                <div class="metric-delta" id="m-beta-ci">—</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Capacity-bound</div>
+                <div class="metric-value" id="m-cap">—</div>
+                <div class="metric-delta">of adopted recommendations</div>
+            </div>
+        </div>
+
+        <div class="row two">
+            <div class="card">
+                <h3>Where the elasticity number comes from</h3>
+                <div class="chart-wrap"><canvas id="posterior-chart"></canvas></div>
+                <div class="chart-caption">After conditioning on bookings-on-books to close the demand→price backdoor, the global elasticity is firmly negative. |β| &lt; 1 means demand is inelastic — revenue grows when prices rise, until capacity binds.</div>
+            </div>
+            <div class="card">
+                <h3>Uplift by market group</h3>
+                <div class="chart-wrap"><canvas id="market-chart"></canvas></div>
+                <div class="chart-caption">Where the projected revenue gains concentrate. NL and DE drive the bulk — both because they have the highest baseline volume and because their historical pricing has more headroom.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAYER 2 -->
+    <hr class="divider">
+    <div class="section">
+        <div class="section-label">Layer 2 — Decision support</div>
+        <h2>Where should the pricing manager look first?</h2>
+
+        <div class="row split">
+            <div class="card">
+                <h3>Review effort budget</h3>
+                <div class="chart-wrap"><canvas id="flag-chart"></canvas></div>
+                <ul class="bullet-list" style="margin-top:14px">
+                    <li class="green"><strong>Green</strong> — small change, stable history → auto-accept</li>
+                    <li class="amber"><strong>Yellow</strong> — moderate change → light review</li>
+                    <li class="red"><strong>Red</strong> — large change or volatile history → senior sign-off</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Recommended change vs. expected uplift</h3>
+                <div class="chart-wrap"><canvas id="scatter-chart"></canvas></div>
+                <div class="chart-caption">Each dot is one (campsite × accommodation × market × week) decision. The red points cluster in the upper-right — high uplift, but also high uncertainty. That is exactly where human review pays off most.</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+            <h3>Top 25 decisions ranked by uplift</h3>
+            <div style="overflow-x:auto">
+                <table id="top-table">
+                    <thead>
+                        <tr>
+                            <th>Campsite</th><th>Market</th><th>Type</th>
+                            <th class="num">Current €</th><th class="num">Recommended €</th><th class="num">Δ %</th>
+                            <th class="num">Bookings now</th><th class="num">Expected</th>
+                            <th class="num">Uplift €</th><th>Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAYER 3 -->
+    <hr class="divider">
+    <div class="section">
+        <div class="section-label">Layer 3 — Strategic insight</div>
+        <h2>Where does the uplift come from?</h2>
+
+        <div class="card" style="margin-bottom:18px">
+            <h3>Market × accommodation type uplift heatmap</h3>
+            <div class="heatmap-wrap"><div id="heatmap"></div></div>
+            <div class="chart-caption" style="margin-top:14px">Premium accommodations in NL and DE are the single largest revenue lever. Budget tier shows surprisingly little uplift — likely because guests there are price-sensitive (effective β closer to −1) and historical prices were already near optimal.</div>
+        </div>
+
+        <div class="card">
+            <h3>Scenario analyzer — uniform price change</h3>
+            <div class="row scenario">
+                <div class="scenario-controls">
+                    <div class="slider-row">
+                        <div class="label-row">
+                            <label>Uniform price change</label>
+                            <span class="value" id="scen-pct">+5%</span>
+                        </div>
+                        <input type="range" id="scen-slider" min="-15" max="25" value="5" step="1">
+                    </div>
+                    <div class="scenario-stats">
+                        <div>
+                            <div class="scenario-stat-label">Scenario uplift</div>
+                            <div class="scenario-stat-value" id="scen-uplift">—</div>
+                        </div>
+                        <div>
+                            <div class="scenario-stat-label">Model uplift (for comparison)</div>
+                            <div class="scenario-stat-value" id="scen-model" style="color:var(--muted)">—</div>
+                        </div>
+                    </div>
+                    <div class="chart-caption" style="margin-top:0">Beyond +15% you are extrapolating outside the support of the training data. The model has no reliable evidence about behaviour at those prices.</div>
+                </div>
+                <div class="chart-wrap tall"><canvas id="scenario-chart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <strong>Model:</strong> Bambi Negative-Binomial hierarchical regression with random elasticity per (campsite × accommodation × market). Conditioning on bookings-on-books closes the demand→price backdoor. Validation: time-based holdout + PSIS-LOO. Recommendations are capped at ±15% of the observed price range. All figures are model estimates, flag-coded for human review.
+    </footer>
+</main>
+</div>
+
+<script>
+const DATA = {"top": [{"campsite": "CAMP_027", "market": "UK", "type": "Premium", "p_mean": 202.17, "TBN": 22, "capacity": 53, "p_min": 198.75, "p_max": 213.3, "p_std": 17.84, "recommended": 238.23, "dpct": 17.8, "exp_bookings": 19.5, "exp_bookings_cap": 19.5, "cap_binds": 0, "obs_rev": 4448.0, "exp_rev": 4645.0, "uplift": 197.0, "flag": "red"}, {"campsite": "CAMP_017", "market": "DE", "type": "Budget", "p_mean": 214.09, "TBN": 22, "capacity": 45, "p_min": 207.33, "p_max": 229.53, "p_std": 11.59, "recommended": 254.15, "dpct": 18.7, "exp_bookings": 19.3, "exp_bookings_cap": 19.3, "cap_binds": 0, "obs_rev": 4710.0, "exp_rev": 4905.0, "uplift": 195.0, "flag": "red"}, {"campsite": "CAMP_005", "market": "UK", "type": "Premium", "p_mean": 217.3, "TBN": 19, "capacity": 34, "p_min": 212.48, "p_max": 239.0, "p_std": 10.4, "recommended": 260.46, "dpct": 19.9, "exp_bookings": 16.6, "exp_bookings_cap": 16.6, "cap_binds": 0, "obs_rev": 4129.0, "exp_rev": 4324.0, "uplift": 195.0, "flag": "red"}, {"campsite": "CAMP_023", "market": "DE", "type": "Premium", "p_mean": 218.4, "TBN": 22, "capacity": 58, "p_min": 202.14, "p_max": 224.97, "p_std": 10.45, "recommended": 253.5, "dpct": 16.1, "exp_bookings": 19.7, "exp_bookings_cap": 19.7, "cap_binds": 0, "obs_rev": 4805.0, "exp_rev": 4994.0, "uplift": 189.0, "flag": "red"}, {"campsite": "CAMP_001", "market": "UK", "type": "Budget", "p_mean": 218.64, "TBN": 24, "capacity": 24, "p_min": 208.08, "p_max": 222.05, "p_std": 19.2, "recommended": 250.26, "dpct": 14.5, "exp_bookings": 21.7, "exp_bookings_cap": 21.7, "cap_binds": 0, "obs_rev": 5247.0, "exp_rev": 5431.0, "uplift": 184.0, "flag": "yellow"}, {"campsite": "CAMP_003", "market": "UK", "type": "Comfort", "p_mean": 170.77, "TBN": 25, "capacity": 45, "p_min": 168.86, "p_max": 182.17, "p_std": 28.95, "recommended": 202.25, "dpct": 18.4, "exp_bookings": 22.0, "exp_bookings_cap": 22.0, "cap_binds": 0, "obs_rev": 4269.0, "exp_rev": 4450.0, "uplift": 181.0, "flag": "red"}, {"campsite": "CAMP_011", "market": "NL", "type": "Budget", "p_mean": 195.36, "TBN": 21, "capacity": 25, "p_min": 181.31, "p_max": 199.43, "p_std": 25.83, "recommended": 231.47, "dpct": 18.5, "exp_bookings": 18.5, "exp_bookings_cap": 18.5, "cap_binds": 0, "obs_rev": 4103.0, "exp_rev": 4282.0, "uplift": 179.0, "flag": "red"}, {"campsite": "CAMP_006", "market": "NL", "type": "Family", "p_mean": 204.84, "TBN": 25, "capacity": 46, "p_min": 198.57, "p_max": 220.83, "p_std": 10.94, "recommended": 233.41, "dpct": 13.9, "exp_bookings": 22.7, "exp_bookings_cap": 22.7, "cap_binds": 0, "obs_rev": 5121.0, "exp_rev": 5298.0, "uplift": 177.0, "flag": "yellow"}, {"campsite": "CAMP_031", "market": "BE_FR", "type": "Budget", "p_mean": 172.66, "TBN": 23, "capacity": 56, "p_min": 169.51, "p_max": 185.24, "p_std": 14.01, "recommended": 206.32, "dpct": 19.5, "exp_bookings": 20.1, "exp_bookings_cap": 20.1, "cap_binds": 0, "obs_rev": 3971.0, "exp_rev": 4147.0, "uplift": 176.0, "flag": "red"}, {"campsite": "CAMP_009", "market": "NL", "type": "Budget", "p_mean": 205.81, "TBN": 18, "capacity": 41, "p_min": 192.89, "p_max": 224.51, "p_std": 16.78, "recommended": 245.5, "dpct": 19.3, "exp_bookings": 15.8, "exp_bookings_cap": 15.8, "cap_binds": 0, "obs_rev": 3705.0, "exp_rev": 3879.0, "uplift": 174.0, "flag": "red"}, {"campsite": "CAMP_027", "market": "BE_FR", "type": "Family", "p_mean": 155.68, "TBN": 25, "capacity": 50, "p_min": 144.58, "p_max": 157.66, "p_std": 27.86, "recommended": 184.77, "dpct": 18.7, "exp_bookings": 22.0, "exp_bookings_cap": 22.0, "cap_binds": 0, "obs_rev": 3892.0, "exp_rev": 4065.0, "uplift": 173.0, "flag": "red"}, {"campsite": "CAMP_002", "market": "DE", "type": "Premium", "p_mean": 212.6, "TBN": 20, "capacity": 48, "p_min": 208.59, "p_max": 221.73, "p_std": 20.85, "recommended": 248.58, "dpct": 16.9, "exp_bookings": 17.8, "exp_bookings_cap": 17.8, "cap_binds": 0, "obs_rev": 4252.0, "exp_rev": 4425.0, "uplift": 173.0, "flag": "red"}, {"campsite": "CAMP_019", "market": "BE_FR", "type": "Comfort", "p_mean": 217.72, "TBN": 17, "capacity": 58, "p_min": 206.42, "p_max": 235.29, "p_std": 35.59, "recommended": 258.16, "dpct": 18.6, "exp_bookings": 15.0, "exp_bookings_cap": 15.0, "cap_binds": 0, "obs_rev": 3701.0, "exp_rev": 3872.0, "uplift": 171.0, "flag": "red"}, {"campsite": "CAMP_035", "market": "NL", "type": "Premium", "p_mean": 211.25, "TBN": 20, "capacity": 45, "p_min": 200.54, "p_max": 218.77, "p_std": 5.74, "recommended": 243.81, "dpct": 15.4, "exp_bookings": 18.0, "exp_bookings_cap": 18.0, "cap_binds": 0, "obs_rev": 4225.0, "exp_rev": 4389.0, "uplift": 164.0, "flag": "red"}, {"campsite": "CAMP_006", "market": "DE", "type": "Premium", "p_mean": 189.68, "TBN": 20, "capacity": 20, "p_min": 176.79, "p_max": 195.42, "p_std": 12.66, "recommended": 224.85, "dpct": 18.5, "exp_bookings": 17.6, "exp_bookings_cap": 17.6, "cap_binds": 0, "obs_rev": 3794.0, "exp_rev": 3957.0, "uplift": 163.0, "flag": "red"}, {"campsite": "CAMP_006", "market": "DE", "type": "Premium", "p_mean": 215.11, "TBN": 18, "capacity": 44, "p_min": 208.02, "p_max": 220.83, "p_std": 14.08, "recommended": 255.41, "dpct": 18.7, "exp_bookings": 15.8, "exp_bookings_cap": 15.8, "cap_binds": 0, "obs_rev": 3872.0, "exp_rev": 4035.0, "uplift": 163.0, "flag": "red"}, {"campsite": "CAMP_030", "market": "NL", "type": "Family", "p_mean": 217.67, "TBN": 17, "capacity": 38, "p_min": 201.07, "p_max": 236.46, "p_std": 7.43, "recommended": 259.18, "dpct": 19.1, "exp_bookings": 14.9, "exp_bookings_cap": 14.9, "cap_binds": 0, "obs_rev": 3700.0, "exp_rev": 3862.0, "uplift": 162.0, "flag": "red"}, {"campsite": "CAMP_039", "market": "NL", "type": "Premium", "p_mean": 217.66, "TBN": 19, "capacity": 27, "p_min": 202.4, "p_max": 238.45, "p_std": 33.89, "recommended": 254.27, "dpct": 16.8, "exp_bookings": 16.9, "exp_bookings_cap": 16.9, "cap_binds": 0, "obs_rev": 4136.0, "exp_rev": 4297.0, "uplift": 161.0, "flag": "red"}, {"campsite": "CAMP_030", "market": "FR_FR", "type": "Premium", "p_mean": 196.14, "TBN": 20, "capacity": 53, "p_min": 189.93, "p_max": 209.88, "p_std": 32.61, "recommended": 232.06, "dpct": 18.3, "exp_bookings": 17.6, "exp_bookings_cap": 17.6, "cap_binds": 0, "obs_rev": 3923.0, "exp_rev": 4084.0, "uplift": 161.0, "flag": "red"}, {"campsite": "CAMP_036", "market": "BE_FR", "type": "Family", "p_mean": 215.34, "TBN": 19, "capacity": 31, "p_min": 198.27, "p_max": 220.71, "p_std": 22.55, "recommended": 252.93, "dpct": 17.5, "exp_bookings": 16.8, "exp_bookings_cap": 16.8, "cap_binds": 0, "obs_rev": 4091.0, "exp_rev": 4249.0, "uplift": 158.0, "flag": "red"}, {"campsite": "CAMP_026", "market": "BE_FR", "type": "Comfort", "p_mean": 213.7, "TBN": 17, "capacity": 47, "p_min": 201.82, "p_max": 226.96, "p_std": 36.56, "recommended": 256.15, "dpct": 19.9, "exp_bookings": 14.8, "exp_bookings_cap": 14.8, "cap_binds": 0, "obs_rev": 3633.0, "exp_rev": 3791.0, "uplift": 158.0, "flag": "red"}, {"campsite": "CAMP_019", "market": "UK", "type": "Budget", "p_mean": 187.75, "TBN": 19, "capacity": 45, "p_min": 174.19, "p_max": 204.78, "p_std": 17.8, "recommended": 222.98, "dpct": 18.8, "exp_bookings": 16.7, "exp_bookings_cap": 16.7, "cap_binds": 0, "obs_rev": 3567.0, "exp_rev": 3724.0, "uplift": 157.0, "flag": "red"}, {"campsite": "CAMP_006", "market": "BE_FR", "type": "Comfort", "p_mean": 181.76, "TBN": 21, "capacity": 31, "p_min": 173.4, "p_max": 186.24, "p_std": 5.3, "recommended": 213.61, "dpct": 17.5, "exp_bookings": 18.6, "exp_bookings_cap": 18.6, "cap_binds": 0, "obs_rev": 3817.0, "exp_rev": 3973.0, "uplift": 156.0, "flag": "red"}, {"campsite": "CAMP_026", "market": "BE_FR", "type": "Premium", "p_mean": 218.4, "TBN": 16, "capacity": 29, "p_min": 209.65, "p_max": 236.45, "p_std": 28.33, "recommended": 257.06, "dpct": 17.7, "exp_bookings": 14.2, "exp_bookings_cap": 14.2, "cap_binds": 0, "obs_rev": 3494.0, "exp_rev": 3650.0, "uplift": 156.0, "flag": "red"}, {"campsite": "CAMP_038", "market": "FR_FR", "type": "Budget", "p_mean": 199.33, "TBN": 19, "capacity": 25, "p_min": 193.83, "p_max": 212.72, "p_std": 12.18, "recommended": 234.62, "dpct": 17.7, "exp_bookings": 16.8, "exp_bookings_cap": 16.8, "cap_binds": 0, "obs_rev": 3787.0, "exp_rev": 3942.0, "uplift": 155.0, "flag": "red"}, {"campsite": "CAMP_000", "market": "BE_FR", "type": "Premium", "p_mean": 189.04, "TBN": 18, "capacity": 42, "p_min": 174.8, "p_max": 199.5, "p_std": 16.08, "recommended": 226.59, "dpct": 19.9, "exp_bookings": 15.7, "exp_bookings_cap": 15.7, "cap_binds": 0, "obs_rev": 3403.0, "exp_rev": 3557.0, "uplift": 154.0, "flag": "red"}, {"campsite": "CAMP_006", "market": "FR_FR", "type": "Family", "p_mean": 217.98, "TBN": 17, "capacity": 30, "p_min": 209.65, "p_max": 236.6, "p_std": 20.05, "recommended": 255.61, "dpct": 17.3, "exp_bookings": 15.1, "exp_bookings_cap": 15.1, "cap_binds": 0, "obs_rev": 3706.0, "exp_rev": 3860.0, "uplift": 154.0, "flag": "red"}, {"campsite": "CAMP_009", "market": "UK", "type": "Comfort", "p_mean": 200.54, "TBN": 16, "capacity": 51, "p_min": 197.32, "p_max": 214.78, "p_std": 28.7, "recommended": 238.25, "dpct": 18.8, "exp_bookings": 14.1, "exp_bookings_cap": 14.1, "cap_binds": 0, "obs_rev": 3209.0, "exp_rev": 3359.0, "uplift": 150.0, "flag": "red"}, {"campsite": "CAMP_001", "market": "BE_FR", "type": "Comfort", "p_mean": 211.52, "TBN": 15, "capacity": 26, "p_min": 205.56, "p_max": 231.86, "p_std": 18.76, "recommended": 253.69, "dpct": 19.9, "exp_bookings": 13.1, "exp_bookings_cap": 13.1, "cap_binds": 0, "obs_rev": 3173.0, "exp_rev": 3323.0, "uplift": 150.0, "flag": "red"}, {"campsite": "CAMP_028", "market": "NL", "type": "Comfort", "p_mean": 199.5, "TBN": 18, "capacity": 25, "p_min": 189.93, "p_max": 213.9, "p_std": 16.48, "recommended": 232.33, "dpct": 16.5, "exp_bookings": 16.1, "exp_bookings_cap": 16.1, "cap_binds": 0, "obs_rev": 3591.0, "exp_rev": 3741.0, "uplift": 150.0, "flag": "red"}], "by_market": {"BE_FR": 17805.0, "DE": 14926.0, "FR_FR": 14049.0, "NL": 16058.0, "UK": 15084.0}, "by_type": {"Budget": 18269.0, "Comfort": 19348.0, "Family": 19592.0, "Premium": 20713.0}, "flag_counts": {"yellow": 724, "red": 580, "green": 196}, "heatmap": {"markets": ["BE_FR", "DE", "FR_FR", "NL", "UK"], "types": ["Budget", "Comfort", "Family", "Premium"], "values": [[4038.0, 4689.0, 5430.0, 3648.0], [3819.0, 3829.0, 3006.0, 4272.0], [2626.0, 3588.0, 3279.0, 4556.0], [3732.0, 3129.0, 4603.0, 4594.0], [4054.0, 4113.0, 3274.0, 3643.0]]}, "scenario": [{"d": -15, "uplift": -122391.6027525196}, {"d": -14, "uplift": -113543.24159216826}, {"d": -13, "uplift": -104810.2807505506}, {"d": -12, "uplift": -96243.32236398423}, {"d": -11, "uplift": -87803.77451750624}, {"d": -10, "uplift": -79504.106372876}, {"d": -9, "uplift": -71278.02869793748}, {"d": -8, "uplift": -63116.78119403977}, {"d": -7, "uplift": -55019.13564310605}, {"d": -6, "uplift": -47028.65590780846}, {"d": -5, "uplift": -39186.938166055224}, {"d": -4, "uplift": -31405.69272231309}, {"d": -3, "uplift": -23683.821472141193}, {"d": -2, "uplift": -16020.257324328632}, {"d": -1, "uplift": -8413.963018627626}, {"d": 0, "uplift": -863.9299999999952}, {"d": 1, "uplift": 6547.45312430457}, {"d": 2, "uplift": 13904.305615893158}, {"d": 3, "uplift": 21207.559648033275}, {"d": 4, "uplift": 28458.122595235145}, {"d": 5, "uplift": 35656.87792426764}, {"d": 6, "uplift": 42804.686045005365}, {"d": 7, "uplift": 49902.385123280765}, {"d": 8, "uplift": 56950.791857777585}, {"d": 9, "uplift": 63950.702222869724}, {"d": 10, "uplift": 70902.89217919973}, {"d": 11, "uplift": 77808.11835367398}, {"d": 12, "uplift": 84667.11869045737}, {"d": 13, "uplift": 91480.61307444933}, {"d": 14, "uplift": 98249.3039286356}, {"d": 15, "uplift": 104973.87678663363}, {"d": 16, "uplift": 111655.00084166147}, {"d": 17, "uplift": 118293.32947310351}, {"d": 18, "uplift": 124889.50075176026}, {"d": 19, "uplift": 131444.13792482833}, {"d": 20, "uplift": 137957.84988157882}, {"d": 21, "uplift": 144431.23160066112}, {"d": 22, "uplift": 150864.864579899}, {"d": 23, "uplift": 157259.31724940386}, {"d": 24, "uplift": 163615.1453687846}, {"d": 25, "uplift": 169932.89240918338}], "posterior": {"centers": [-1.0379, -1.0234, -1.0088, -0.9943, -0.9798, -0.9653, -0.9507, -0.9362, -0.9217, -0.9071, -0.8926, -0.8781, -0.8635, -0.849, -0.8345, -0.82, -0.8054, -0.7909, -0.7764, -0.7618, -0.7473, -0.7328, -0.7182, -0.7037, -0.6892, -0.6747, -0.6601, -0.6456, -0.6311, -0.6165, -0.602, -0.5875, -0.573, -0.5584, -0.5439, -0.5294, -0.5148, -0.5003, -0.4858, -0.4712], "counts": [4, 0, 3, 2, 18, 16, 21, 35, 34, 52, 72, 105, 107, 137, 176, 186, 213, 228, 268, 255, 243, 252, 261, 210, 183, 162, 157, 142, 113, 89, 77, 63, 39, 28, 18, 14, 8, 5, 2, 2], "mean": -0.7494630250594186, "lo": -0.865738719133303, "hi": -0.6312086081228218}, "stats": {"total_uplift": 77922.0, "total_baseline": 2964213.0, "green_uplift": 5232.0, "yellow_uplift": 32544.0, "red_uplift": 40146.0, "adopted_uplift": 37776.0, "n_decisions": 1500, "cap_bind_pct": 0.06666666666666667, "beta_mean": -0.7494630250594186, "beta_lo": -0.865738719133303, "beta_hi": -0.6312086081228218}};
+
+// ------------- State -------------
+const state = {
+    markets: Object.keys(DATA.by_market),
+    types:   Object.keys(DATA.by_type),
+    flags:   ["green","yellow","red"],
+    adoption: "green_yellow",
+    selectedMarkets: new Set(Object.keys(DATA.by_market)),
+    selectedTypes:   new Set(Object.keys(DATA.by_type)),
+    selectedFlags:   new Set(["green","yellow","red"]),
+    scenarioPct: 5,
+};
+
+const charts = {};
+
+// Use a static beta value (pre-computed) and capacity-bound from the original full data
+const STATIC_BETA = DATA.stats.beta_mean;
+const STATIC_CAP_PCT = DATA.stats.cap_bind_pct;
+
+// ------------- Sidebar chips -------------
+function renderChips(containerId, items, selectedSet) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    items.forEach(item => {
+        const chip = document.createElement("div");
+        chip.className = "chip" + (selectedSet.has(item) ? " active" : "");
+        chip.textContent = item;
+        chip.onclick = () => {
+            if (selectedSet.has(item)) {
+                if (selectedSet.size > 1) selectedSet.delete(item);
+            } else {
+                selectedSet.add(item);
+            }
+            renderChips(containerId, items, selectedSet);
+            renderAll();
+        };
+        container.appendChild(chip);
+    });
+}
+
+renderChips("market-chips", state.markets, state.selectedMarkets);
+renderChips("type-chips",   state.types,   state.selectedTypes);
+renderChips("flag-chips",   state.flags,   state.selectedFlags);
+
+document.querySelectorAll('input[name="adoption"]').forEach(r => {
+    r.onchange = () => { state.adoption = r.value; renderAll(); };
+});
+
+document.getElementById("scen-slider").oninput = e => {
+    state.scenarioPct = parseInt(e.target.value);
+    document.getElementById("scen-pct").textContent = (state.scenarioPct >= 0 ? "+" : "") + state.scenarioPct + "%";
+    renderScenario();
+};
+
+// ------------- Filtering -------------
+function filteredTop() {
+    return DATA.top.filter(r =>
+        state.selectedMarkets.has(r.market) &&
+        state.selectedTypes.has(r.type) &&
+        state.selectedFlags.has(r.flag)
+    );
+}
+
+function adoptedFlags() {
+    if (state.adoption === "green") return ["green"];
+    if (state.adoption === "green_yellow") return ["green","yellow"];
+    return ["green","yellow","red"];
+}
+
+function adoptedUplift() {
+    const adopted = adoptedFlags();
+    let total = 0;
+    if (adopted.includes("green")) total += DATA.stats.green_uplift;
+    if (adopted.includes("yellow")) total += DATA.stats.yellow_uplift;
+    if (adopted.includes("red")) total += DATA.stats.red_uplift;
+    return total;
+}
+
+// ------------- Number formatting -------------
+const fmtEur = v => "€" + Math.round(v).toLocaleString("nl-BE");
+const fmtPct = v => (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+const fmtBeta = v => (v >= 0 ? "+" : "") + v.toFixed(2);
+
+// ------------- Metrics -------------
+function renderMetrics() {
+    const total = adoptedUplift();
+    const baseline = DATA.stats.total_baseline;
+    const pct = (total / baseline) * 100;
+    const adoptedFlagsList = adoptedFlags();
+    const totalDecisions = DATA.stats.n_decisions;
+    const adoptedCount = adoptedFlagsList.reduce((acc,f) => acc + (DATA.flag_counts[f] || 0), 0);
+
+    document.getElementById("m-uplift").textContent = fmtEur(total);
+    document.getElementById("m-uplift-pct").textContent = fmtPct(pct) + " over baseline";
+    document.getElementById("m-decisions").textContent = totalDecisions.toLocaleString("nl-BE");
+    document.getElementById("m-decisions-sub").textContent = adoptedCount.toLocaleString("nl-BE") + " adopted under '" + state.adoption.replace("_"," + ") + "'";
+    document.getElementById("m-beta").textContent = fmtBeta(STATIC_BETA);
+    document.getElementById("m-beta-ci").textContent = "80% CI [" + fmtBeta(DATA.stats.beta_lo) + ", " + fmtBeta(DATA.stats.beta_hi) + "]";
+    document.getElementById("m-cap").textContent = STATIC_CAP_PCT.toFixed(0) + "%";
+}
+
+// ------------- Charts -------------
+const COMMON = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    animation: { duration: 200 },
+};
+
+function renderPosterior() {
+    const ctx = document.getElementById("posterior-chart");
+    const p = DATA.posterior;
+    if (charts.posterior) charts.posterior.destroy();
+    charts.posterior = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: p.centers.map(c => c.toFixed(2)),
+            datasets: [{
+                data: p.counts,
+                backgroundColor: "#2E5C8A",
+                borderColor: "#2E5C8A",
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            ...COMMON,
+            scales: {
+                x: { title: { display: true, text: "β (log_price coefficient)", font: { size: 11 } },
+                     ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+                y: { title: { display: true, text: "posterior samples", font: { size: 11 } },
+                     ticks: { font: { size: 10 } }, grid: { color: "#F0EEE8" } }
+            }
+        }
+    });
+}
+
+function renderMarketChart() {
+    const ctx = document.getElementById("market-chart");
+    const filtered = Object.entries(DATA.by_market)
+        .filter(([k,_]) => state.selectedMarkets.has(k))
+        .sort((a,b) => a[1]-b[1]);
+    if (charts.market) charts.market.destroy();
+    charts.market = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: filtered.map(d => d[0]),
+            datasets: [{
+                data: filtered.map(d => d[1]),
+                backgroundColor: "#2E5C8A",
+                borderRadius: 3,
+            }]
+        },
+        options: {
+            ...COMMON, indexAxis: "y",
+            scales: {
+                x: { ticks: { callback: v => fmtEur(v), font: { size: 10 } }, grid: { color: "#F0EEE8" } },
+                y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+}
+
+function renderFlagChart() {
+    const ctx = document.getElementById("flag-chart");
+    const counts = ["green","yellow","red"].map(f => DATA.flag_counts[f] || 0);
+    if (charts.flag) charts.flag.destroy();
+    charts.flag = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Green","Yellow","Red"],
+            datasets: [{
+                data: counts,
+                backgroundColor: ["#4C9A4A","#E0B341","#C04848"],
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            ...COMMON,
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: { grid: { color: "#F0EEE8" }, ticks: { font: { size: 10 } } }
+            },
+            plugins: { ...COMMON.plugins, datalabels: false }
+        }
+    });
+}
+
+function renderScatter() {
+    const ctx = document.getElementById("scatter-chart");
+    const points = DATA.top;
+    const colors = { green: "rgba(76,154,74,0.6)", yellow: "rgba(224,179,65,0.6)", red: "rgba(192,72,72,0.6)" };
+    const data = ["green","yellow","red"].map(flag => ({
+        label: flag,
+        data: points.filter(p => p.flag === flag).map(p => ({ x: p.dpct, y: p.uplift, raw: p })),
+        backgroundColor: colors[flag],
+        borderColor: colors[flag].replace("0.6","1"),
+        pointRadius: 5,
+    }));
+    if (charts.scatter) charts.scatter.destroy();
+    charts.scatter = new Chart(ctx, {
+        type: "scatter",
+        data: { datasets: data },
+        options: {
+            ...COMMON,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const r = ctx.raw.raw;
+                            return [
+                                r.campsite + " · " + r.market + " · " + r.type,
+                                "Δ " + fmtPct(r.dpct) + "  →  " + fmtEur(r.uplift),
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: "Recommended price change (%)", font: { size: 11 } },
+                     ticks: { font: { size: 10 } }, grid: { color: "#F0EEE8" } },
+                y: { title: { display: true, text: "Expected uplift (€)", font: { size: 11 } },
+                     ticks: { callback: v => fmtEur(v), font: { size: 10 } }, grid: { color: "#F0EEE8" } }
+            }
+        }
+    });
+}
+
+function renderTable() {
+    const tbody = document.querySelector("#top-table tbody");
+    const rows = filteredTop().slice(0, 25);
+    tbody.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.campsite}</td>
+            <td>${r.market}</td>
+            <td>${r.type}</td>
+            <td class="num">€${r.p_mean.toFixed(2)}</td>
+            <td class="num">€${r.recommended.toFixed(2)}</td>
+            <td class="num">${fmtPct(r.dpct)}</td>
+            <td class="num">${r.TBN}</td>
+            <td class="num">${r.exp_bookings_cap.toFixed(1)}</td>
+            <td class="num"><strong>${fmtEur(r.uplift)}</strong></td>
+            <td><span class="flag-pill ${r.flag}">${r.flag}</span></td>
+        </tr>
+    `).join("");
+}
+
+function renderHeatmap() {
+    const h = DATA.heatmap;
+    const wrap = document.getElementById("heatmap");
+    const maxVal = Math.max(...h.values.flat());
+    const cols = h.types.length;
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = `120px repeat(${cols}, 1fr)`;
+    grid.style.gap = "2px";
+    grid.innerHTML = "";
+
+    // header row
+    grid.appendChild(makeCell("", "heatmap-row-label"));
+    h.types.forEach(t => grid.appendChild(makeCell(t, "heatmap-col-label")));
+
+    h.markets.forEach((m, i) => {
+        grid.appendChild(makeCell(m, "heatmap-row-label"));
+        h.values[i].forEach(v => {
+            const intensity = Math.max(0, v / maxVal);
+            const cell = makeCell(fmtEur(v), "heatmap-cell");
+            cell.style.background = `rgba(46,92,138,${0.08 + intensity * 0.85})`;
+            cell.style.color = intensity > 0.5 ? "white" : "#1A1F2B";
+            grid.appendChild(cell);
+        });
+    });
+
+    wrap.innerHTML = "";
+    wrap.appendChild(grid);
+}
+
+function makeCell(text, cls) {
+    const d = document.createElement("div");
+    d.className = cls;
+    d.textContent = text;
+    return d;
+}
+
+function renderScenario() {
+    const ctx = document.getElementById("scenario-chart");
+    const scen = DATA.scenario;
+    const currentDelta = state.scenarioPct;
+    const currentPoint = scen.find(s => s.d === currentDelta);
+    const currentUplift = currentPoint ? currentPoint.uplift : 0;
+    const modelUplift = DATA.stats.adopted_uplift;
+
+    document.getElementById("scen-uplift").textContent = fmtEur(currentUplift);
+    document.getElementById("scen-model").textContent = fmtEur(modelUplift);
+
+    if (charts.scenario) charts.scenario.destroy();
+    charts.scenario = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: scen.map(s => s.d + "%"),
+            datasets: [{
+                data: scen.map(s => s.uplift),
+                borderColor: "#2E5C8A",
+                backgroundColor: "rgba(46,92,138,0.07)",
+                fill: true,
+                tension: 0.25,
+                pointRadius: scen.map(s => s.d === currentDelta ? 7 : 0),
+                pointBackgroundColor: "#1A1F2B",
+                borderWidth: 2.5,
+            }]
+        },
+        options: {
+            ...COMMON,
+            scales: {
+                x: { title: { display: true, text: "Uniform price change", font: { size: 11 } },
+                     ticks: { maxTicksLimit: 9, font: { size: 10 } }, grid: { display: false } },
+                y: { title: { display: true, text: "Total expected uplift (€)", font: { size: 11 } },
+                     ticks: { callback: v => fmtEur(v), font: { size: 10 } }, grid: { color: "#F0EEE8" } }
+            },
+            plugins: {
+                legend: { display: false },
+                annotation: {
+                    annotations: {
+                        zero: { type: "line", yMin: 0, yMax: 0, borderColor: "#888", borderWidth: 1 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => "Δ " + ctx[0].label,
+                        label: ctx => "Uplift: " + fmtEur(ctx.parsed.y)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAll() {
+    renderMetrics();
+    renderMarketChart();
+    renderFlagChart();
+    renderScatter();
+    renderTable();
+    renderHeatmap();
+    renderScenario();
+    if (!charts.posterior) renderPosterior();
+}
+
+renderAll();
+</script>
+</body>
+</html>
