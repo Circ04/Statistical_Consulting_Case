@@ -1,0 +1,191 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper, top=2cm, bottom=2cm, left=2.2cm, right=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, skip=4pt}
+\usepackage{titling}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{1.2ex plus .3ex}{0.6ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.0ex plus .3ex}{0.4ex plus .2ex}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=*}
+\usepackage{parskip}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black!60!blue, urlcolor=black!60!blue}
+\setlength{\droptitle}{-3em}
+\pretitle{\begin{flushleft}\Large\bfseries}
+\posttitle{\par\end{flushleft}\vspace{-0.4em}}
+\preauthor{\begin{flushleft}\small}
+\postauthor{\par\end{flushleft}}
+\predate{\begin{flushleft}\small\itshape}
+\postdate{\par\end{flushleft}\vspace{-1em}}
+
+\definecolor{accent}{HTML}{2E5C8A}
+\definecolor{soft}{HTML}{6B6962}
+
+\title{Dynamic Pricing for European Camping Group:\\ A Causal-Identification Approach}
+\author{Statistical Consulting Project --- KU Leuven, MSc Data Science \& Statistics, 2025--2026}
+\date{Client: ORTEC / European Camping Group \quad\textbar\quad May 2026}
+
+\begin{document}
+\maketitle
+
+\vspace{-1em}
+
+% =====================================================================
+\section{Problem and business context}
+
+European Camping Group (ECG) operates over 400 campsites across 10 European countries, each offering several accommodation types and serving four distinct market segments. With a 30-week open season, this implies more than \textbf{250{,}000 individual prices to set every year}. Today, this is largely a manual exercise in spreadsheets. ECG and ORTEC have asked: \emph{can we use the historical booking data to recommend better prices, and what would that be worth in revenue?}
+
+The deliverable is twofold: a defensible model linking price to demand, and a decision-support tool that turns the model into actionable recommendations for ECG's pricing managers.
+
+% =====================================================================
+\section{Approach in one picture}
+
+We follow a two-step pipeline. The model estimates how sensitive bookings are to price (the \emph{elasticity}); the optimiser then uses that elasticity to recommend a revenue-maximising price for every booking decision, capped by what is operationally safe. A human-in-the-loop layer routes recommendations to one of three review tracks based on how aggressive the suggested change is.
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=4mm,
+  block/.style={rectangle, draw=black!50, thick, rounded corners=2pt,
+                minimum height=10mm, minimum width=22mm, inner sep=4pt, align=center, fill=white,
+                font=\footnotesize},
+  arrow/.style={-{Latex[length=2mm]}, thick, draw=black!60},
+]
+\node[block, fill=blue!4] (data) {Historical\\bookings};
+\node[block, fill=blue!4, right=of data] (model) {Bayesian\\elasticity\\model};
+\node[block, fill=blue!4, right=of model] (opt) {Revenue\\optimiser};
+\node[block, fill=blue!4, right=of opt] (hitl) {Human-in-\\the-loop\\routing};
+\node[block, fill=accent!15, right=of hitl] (action) {Final\\price};
+
+\draw[arrow] (data) -- (model);
+\draw[arrow] (model) -- (opt);
+\draw[arrow] (opt) -- (hitl);
+\draw[arrow] (hitl) -- (action);
+
+\node[below=4mm of model, font=\scriptsize\itshape, color=soft, align=center, text width=24mm] {how does demand react to price?};
+\node[below=4mm of opt, font=\scriptsize\itshape, color=soft, align=center, text width=24mm] {what price maximises revenue?};
+\node[below=4mm of hitl, font=\scriptsize\itshape, color=soft, align=center, text width=24mm] {auto / review / senior sign-off};
+\end{tikzpicture}
+\end{center}
+
+% =====================================================================
+\section{Why this problem is harder than it looks}
+
+A naive approach --- regress bookings on price --- gives the wrong answer, and we want to be transparent about why before showing results. ECG's existing pricing system already \emph{reacts to demand}: when a campsite fills up early, prices go up. So in the historical data, we observe that high prices and high bookings tend to occur together. A blind statistical model interprets this as ``raising prices increases bookings,'' which is economically nonsensical and would lead to disastrous recommendations.
+
+The technical name for this is a \emph{confounded causal relationship}: price and bookings share a common cause (latent demand), so we cannot read the price effect off the raw correlation. The fix is to control for the demand signal that the existing pricer responds to. We construct a feature called \emph{bookings-on-books} --- how full the property already was at the moment the price was set --- and condition on it. This blocks the reverse channel and isolates the genuine effect of price on remaining demand.
+
+\subsection{The model in plain terms}
+
+We fit a Bayesian hierarchical regression of booked nights on log-price, log bookings-on-books, capacity, special-period flags, and accommodation characteristics, with a per-group intercept and price-slope across the 568 distinct campsite\,$\times$\,accommodation\,$\times$\,market combinations. The likelihood is Negative Binomial to handle the overdispersion typical of count data. Inference is done with the No-U-Turn Sampler (a modern MCMC algorithm) in 2 chains of 1000 draws each.
+
+The hierarchical structure means each group can have its own elasticity, but groups with little data borrow strength from the global average --- the right behaviour for ECG's long tail of smaller campsites.
+
+% =====================================================================
+\section{Results}
+
+\subsection{The headline number: price elasticity}
+
+After conditioning on bookings-on-books, the global price elasticity is \textbf{$\beta = -0.76$}, with an 80\% credible interval of $[-0.87, -0.65]$. The sign is firmly negative: \emph{a 1\% price increase reduces expected bookings by roughly 0.76\%}. Convergence diagnostics are clean ($\hat{R}<1.05$, effective sample size $>400$ on all parameters).
+
+The economic implication is the key insight of this study. Because $|\beta| < 1$, demand is \emph{inelastic}: a price increase loses fewer bookings in percentage terms than the price gains. Total revenue therefore \emph{rises} with price, up to the point where capacity binds. In short, the data say that \textbf{ECG is currently pricing below the revenue-maximising point} on most properties.
+
+The hierarchical model also tells us something important for the operating model: the per-group elasticities are tightly clustered around the global value (group-level standard deviation $\approx 0.03$). A single global elasticity is sufficient; we do not need separate models per market or accommodation type. This dramatically simplifies the production system.
+
+\subsection{From elasticity to recommended prices}
+
+Given $\beta$, expected revenue at price $p$ is $R(p) = p \cdot \mathrm{TBN} \cdot (p / p_{\text{obs}})^\beta$, capped by capacity. With $\beta = -0.76$, this function is monotone increasing, so the optimum sits at the upper bound of the safe price range. We define ``safe'' as $\pm 15\%$ of the historical price range observed for that specific group --- beyond this band, the model is extrapolating and we have no evidence about behaviour.
+
+Applied across all 59{,}072 ROMGID-week decisions in the dataset:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Decisions analysed & 59{,}072 \\
+Total observed (baseline) revenue & \euro{}735{,}228{,}894 \\
+Total expected revenue uplift & \euro{}37{,}522{,}590 \\
+Uplift as \% of baseline & $+5.10\%$ \\
+Median recommended change & $+24.1\%$ \\
+\% decisions where capacity binds & $0.00\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The result is consistent with ORTEC's prior expectation that there is meaningful headroom, but the magnitude is bounded by our deliberate $\pm 15\%$ safety cap. Lifting the cap to $\pm 25\%$ extrapolates and gives a notional $+40$M uplift, but this number should not be taken seriously without further validation.
+
+\subsection{Where the uplift comes from}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Market segment} & \textbf{Uplift} & \textbf{Share} \\
+\midrule
+Benelux & \euro{}10{,}769{,}628 & 28.7\% \\
+Domestic & \euro{}9{,}258{,}595 & 24.7\% \\
+Rest of Europe & \euro{}8{,}749{,}896 & 23.3\% \\
+DACH & \euro{}8{,}744{,}471 & 23.3\% \\
+\bottomrule
+\end{tabular}
+\quad
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Accommodation} & \textbf{Uplift} & \textbf{Share} \\
+\midrule
+Standard & \euro{}8{,}270{,}992 & 22.0\% \\
+Comfort & \euro{}8{,}200{,}536 & 21.9\% \\
+Family & \euro{}8{,}000{,}940 & 21.3\% \\
+Luxury & \euro{}7{,}793{,}202 & 20.8\% \\
+Romantic & \euro{}5{,}256{,}920 & 14.0\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Uplift is distributed remarkably evenly across markets and accommodation types --- consistent with the finding that elasticity is roughly homogeneous. The slight under-representation of Romantic accommodations reflects lower volume rather than lower elasticity.
+
+% =====================================================================
+\section{Implementation: human-in-the-loop, not autopilot}
+
+A model that recommends $+24\%$ price changes \emph{en bloc} would not survive contact with ECG's reality. Recommendations must be filtered through pricing-manager judgement, and the review effort must be allocated where it is actually needed.
+
+We propose a three-tier flagging system, calibrated on the joint distribution of recommended price change magnitude and historical price volatility:
+
+\begin{itemize}
+  \item \textbf{Green} (33\% of decisions): small relative change against a stable historical price. Auto-accept; revisit only on weekly KPI dashboards.
+  \item \textbf{Yellow} (34\%): moderate change. Light review by the pricing analyst before publication.
+  \item \textbf{Red} (33\%): large change or volatile history. Senior sign-off required; treated as exceptions rather than routine.
+\end{itemize}
+
+This is not just operational risk management --- it has commercial logic. Of the total \euro{}37.5M uplift, \emph{green and yellow decisions together account for \euro{}30.8M} (82\%). The red-flag exceptions contribute only \euro{}6.8M despite covering one-third of decisions. Most of the value sits in the routine, low-risk band; the system is designed to capture that systematically while keeping aggressive moves under human control.
+
+% =====================================================================
+\section{Limitations and next steps}
+
+\textbf{Honest about what we did not model.} Our elasticity is a static, global average over the season. Real demand has time-of-year structure, lead-time effects, and macro-economic sensitivities that this simple specification ignores. We tested a richer model with seasonal and lead-time terms; it overconditioned on near-perfect proxies and produced unstable estimates. We chose stability over sophistication for this report, but the price ceiling on this particular dataset is the global elasticity --- not the model.
+
+\textbf{Feedback loop risk.} The model learns from ECG's historical, human-set prices. If those prices have always followed similar rules, the data may not contain enough variation to estimate elasticity at unfamiliar price points. We recommend ECG run small randomised price experiments on a subset of properties --- not as a research luxury, but as a prerequisite for any pricing system that intends to keep learning over time.
+
+\textbf{From batch to real-time.} The current pipeline is a periodic re-fit on accumulated data. ORTEC's roadmap towards reinforcement-learning-based dynamic pricing is the natural extension: the elasticity model we delivered is the simplest member of that family, and provides a calibrated baseline against which any future RL agent must justify its added complexity.
+
+\textbf{Capacity constraints.} The optimiser uses a hard capacity cap, but in practice ECG manages occupancy targets, not just hard ceilings. A version of the optimiser that respects soft occupancy constraints (penalising both overshoot and undershoot) is a one-week extension and would make the recommendations directly usable in the existing planning workflow.
+
+% =====================================================================
+\section{Conclusion}
+
+By treating dynamic pricing as a causal-inference problem and explicitly addressing the confounding caused by ECG's existing pricer, we recover a stable, defensible price elasticity of $-0.76$. Translated through a constant-elasticity revenue function with capacity and safe-range constraints, this corresponds to a model-projected uplift of \euro{}37.5M, or 5.1\% of baseline revenue, on the synthetic dataset. The finding that demand is inelastic --- and that this property is uniform across markets and accommodation types --- is the actionable insight: \emph{ECG can systematically raise prices within a guarded band and expect revenue to follow}. The accompanying decision dashboard makes this concrete at the level of every individual booking decision, with built-in review tracks that match the recommendation's risk profile.
+
+\end{document}
