@@ -45,6 +45,7 @@ The reason is structural, not statistical. ECG's pricing system already reacts t
 
 The fix requires identifying the demand signal that the pricer reacts to. Bookings on books, the cumulative number of nights already reserved at the moment a price is set, is observed in our data and lies on the only open backdoor path between price and remaining demand. Conditioning on it blocks the reverse-causation channel and better isolates the genuine effect of price.
 
+
 \begin{center}
 \begin{tikzpicture}[
   obs/.style={circle, draw=accent, thick, fill=accent!10, minimum size=10mm, font=\scriptsize, inner sep=0pt},
@@ -107,7 +108,7 @@ Out-of-sample, LightGBM achieves a median ROMGID-level error of 27\% on total bo
 
 \section{The optimiser and what it recommends}
 
-For each test-fold snapshot independently, we ask the LightGBM forecaster a counterfactual question: at this point in the booking horizon, what price would have produced the highest predicted revenue? We sweep 21 candidate price multipliers in the range $[0.85,\, 1.15] \times p_{\mathrm{obs}}$, predict bookings at each candidate, compute the implied revenue $p \cdot \hat{N}(p)$, and pick the maximum. The output for a single ROMGID is therefore not a single static price but a trajectory of 53 prices across the booking horizon, one per snapshot.
+For each test-fold snapshot independently, we ask the LightGBM forecaster a counterfactual question: at this point in the booking horizon, what price would have produced the highest predicted revenue? We simulated 21 different price points, ranging up to 15\% higher and lower than historical rates, to find the exact price that maximises predicted revenue. The output for a single ROMGID is therefore not a single static price but a trajectory of 53 prices across the booking horizon, one per snapshot.
 
 Three constraints keep the recommendation defensible: the candidate range is capped at $\pm 15\%$ of historical prices for that group, predicted bookings are clipped at capacity, and every recommendation passes through a two-tier flag (green / yellow) before deployment, keeping the human in the loop.
 

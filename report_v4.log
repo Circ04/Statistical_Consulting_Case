@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.10.13)  9 MAY 2026 16:26
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.10.13)  9 MAY 2026 17:33
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -437,7 +437,7 @@ File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count283
 \l__pdf_internal_box=\box59
 )
-No file report_v4.aux.
+(./report_v4.aux)
 \openout1 = `report_v4.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 33.
@@ -454,6 +454,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 33.
 LaTeX Font Info:    ... okay on input line 33.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 33.
 LaTeX Font Info:    ... okay on input line 33.
+
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -521,43 +522,43 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <10.95> on input line 42.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 57.
+(Font)              <5> on input line 58.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <9> on input line 79.
+(Font)              <9> on input line 80.
 
 [1
 
 {/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 [2]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 118.
-<reporting/figures//recommendations_distribution.pdf, id=29, 679.19562pt x 294.
+(Font)              <7> on input line 119.
+<reporting/figures//recommendations_distribution.pdf, id=28, 679.19562pt x 294.
 5291pt>
 File: reporting/figures//recommendations_distribution.pdf Graphic file (type pd
 f)
 <use reporting/figures//recommendations_distribution.pdf>
 Package pdftex.def Info: reporting/figures//recommendations_distribution.pdf  u
-sed on input line 135.
+sed on input line 136.
 (pdftex.def)             Requested size: 338.58632pt x 146.82375pt.
-<reporting/figures//revenue_trajectory.pdf, id=30, 679.01678pt x 314.67838pt>
+<reporting/figures//revenue_trajectory.pdf, id=29, 679.01678pt x 314.67838pt>
 File: reporting/figures//revenue_trajectory.pdf Graphic file (type pdf)
 <use reporting/figures//revenue_trajectory.pdf>
 Package pdftex.def Info: reporting/figures//revenue_trajectory.pdf  used on inp
-ut line 142.
+ut line 143.
 (pdftex.def)             Requested size: 338.58632pt x 156.91145pt.
  [3 <./reporting/figures//recommendations_distribution.pdf> <./reporting/figure
 s//revenue_trajectory.pdf>]
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 1
-54.
+55.
 
 (/usr/local/texlive/2021/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 ) [4] [5]
 (./report_v4.aux) ) 
 Here is how much of TeX's memory you used:
- 14223 strings out of 478994
- 289693 string characters out of 5858183
- 562991 words of memory out of 5000000
+ 14225 strings out of 478994
+ 289721 string characters out of 5858183
+ 562982 words of memory out of 5000000
  31471 multiletter control sequences out of 15000+600000
  418729 words of font info for 59 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -569,27 +570,26 @@ cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts
 cm/cmmi8.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmmi9.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/c
 mr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
-8.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.p
-fb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pf
-b></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
-</usr/local/texlive/2021/texmf-dist/fonts/type1/public/eurosym/feymr10.pfb></us
-r/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/
-local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/lo
-cal/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/loca
-l/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/
-texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local/te
-xlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/texl
-ive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texliv
-e/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texlive/
-2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/20
-21/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021
-/texmf-dist/fonts/type1/public/cm-super/sfti0900.pfb></usr/local/texlive/2021/t
-exmf-dist/fonts/type1/public/cm-super/sfti1095.pfb></usr/local/texlive/2021/tex
-mf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on report_v4.pdf (5 pages, 375247 bytes).
+9.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10
+.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.p
+fb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/eurosym/feymr10.pfb><
+/usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></u
+sr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr
+/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/l
+ocal/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/loc
+al/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local
+/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/t
+exlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/tex
+live/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texli
+ve/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive
+/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2
+021/texmf-dist/fonts/type1/public/cm-super/sfti0900.pfb></usr/local/texlive/202
+1/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb></usr/local/texlive/2021/
+texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
+Output written on report_v4.pdf (5 pages, 366854 bytes).
 PDF statistics:
- 215 PDF objects out of 1000 (max. 8388607)
- 95 compressed objects within 1 object stream
+ 211 PDF objects out of 1000 (max. 8388607)
+ 92 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  23 words of extra memory for PDF output out of 10000 (max. 10000000)
 
