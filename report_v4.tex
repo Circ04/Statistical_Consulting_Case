@@ -176,7 +176,7 @@ The flag system connects the model to the human. A \textbf{green} flag means the
 
 The methodology rests on three assumptions worth flagging:
 \begin{itemize}
-    \item \textbf{Unobserved Endogeneity:} While we close the primary backdoor (demand-autocorrelation via $\log\mathrm{BoB}$), other sources of price endogeneity—such as sudden channel-mix changes or manual manager overrides—remain unobservable in this dataset.
+    \item \textbf{Unobserved Endogeneity:} While we close the primary backdoor (demand-autocorrelation via $\log\mathrm{BoB}$), other sources of price endogeneity, such as sudden channel-mix changes or manual manager overrides, remain unobservable in this dataset.
     \item \textbf{Model Exploitation:} LightGBM's 27\% out-of-sample error naturally grows for counterfactual prices the model has not seen. The optimizer may "exploit" this noise, picking prices that appear optimal due to prediction error rather than true demand response.
     \item \textbf{Capacity Constraints:} Capacity is structurally non-binding in much of this data (median utilization 10\%). A real deployment in peak weeks at premium properties would likely encounter the capacity constraint that is currently a tested but inactive safeguard.
 \end{itemize}
